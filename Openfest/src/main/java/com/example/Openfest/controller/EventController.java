@@ -4,6 +4,7 @@ import com.example.Openfest.dto.CreateEventRequest;
 import com.example.Openfest.dto.EventResponse;
 import com.example.Openfest.dto.UpdateEventRequest;
 import com.example.Openfest.dto.UpdateEventStatusRequest;
+import com.example.Openfest.entity.AgeRestriction;
 import com.example.Openfest.service.EventService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -21,6 +23,19 @@ public class EventController {
 
     public EventController(EventService eventService) {
         this.eventService = eventService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<EventResponse>> getPublishedEvents(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) Boolean freeOnly,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) AgeRestriction ageRestriction) {
+
+        List<EventResponse> events = eventService.getPublishedEvents(
+                q, city, freeOnly, maxPrice, ageRestriction);
+        return ResponseEntity.ok(events);
     }
 
     @PostMapping
