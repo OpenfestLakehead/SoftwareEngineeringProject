@@ -16,14 +16,20 @@ export default function Home() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
           <Link
-            href="/dashboard"
+            href="/events"
             className="w-full sm:w-auto px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm shadow-md transition-colors"
           >
-            Go to Creator Dashboard →
+            Explore Events →
+          </Link>
+          <Link
+            href="/dashboard"
+            className="w-full sm:w-auto px-6 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-200 font-semibold text-sm transition-colors"
+          >
+            Creator Dashboard
           </Link>
           <Link
             href="/events/create"
-            className="w-full sm:w-auto px-6 py-3 rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-800 dark:text-zinc-200 font-semibold text-sm transition-colors"
+            className="w-full sm:w-auto px-6 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-800 dark:text-gray-200 font-semibold text-sm transition-colors"
           >
             Create New Event
           </Link>
