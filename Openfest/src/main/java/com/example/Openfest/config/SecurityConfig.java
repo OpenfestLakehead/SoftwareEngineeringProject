@@ -70,6 +70,7 @@ public class SecurityConfig {
 
                 .requestMatchers(
                     HttpMethod.GET,
+                    "/api/events",
                     "/api/events/**"
                 ).permitAll()
 
