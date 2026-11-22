@@ -4,10 +4,14 @@ import { formatAgeRestriction, formatEventPrice } from "@/lib/helpers/events";
 
 interface EventCardProps {
   event: EventResponse;
+  filterQuery?: string;
 }
 
-export default function EventCard({ event }: EventCardProps) {
+export default function EventCard({ event, filterQuery }: EventCardProps) {
   const isFree = event.price === 0;
+  const detailHref = filterQuery
+    ? `/events?${filterQuery}&eventId=${event.id}`
+    : `/events?eventId=${event.id}`;
 
   return (
     <article className="flex flex-col justify-between bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
@@ -67,7 +71,7 @@ export default function EventCard({ event }: EventCardProps) {
 
       <div className="p-4 bg-gray-50 dark:bg-gray-800/40 border-t border-gray-200 dark:border-gray-800 flex items-center justify-end">
         <Link
-          href={`/events?eventId=${event.id}`}
+          href={detailHref}
           scroll={false}
           className="inline-flex items-center justify-center px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
