@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { EventResponse } from "@/lib/api/events";
 import { formatAgeRestriction, formatEventPrice } from "@/lib/helpers/events";
 
@@ -11,21 +11,25 @@ interface EventDetailModalProps {
 
 export default function EventDetailModal({ event }: EventDetailModalProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const handleClose = () => {
-    router.replace("/events", { scroll: false });
-  };
+  const handleClose = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("eventId");
+    const qs = params.toString();
+    router.replace(qs ? `/events?${qs}` : "/events", { scroll: false });
+  }, [router, searchParams]);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        router.replace("/events", { scroll: false });
+        handleClose();
       }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [router]);
+  }, [handleClose]);
 
   const isFree = event.price === 0;
 

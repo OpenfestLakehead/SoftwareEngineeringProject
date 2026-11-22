@@ -1,23 +1,77 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { getPublishedEvents, type EventResponse } from "@/lib/api/events";
+import {
+  getPublishedEvents,
+  type AgeRestriction,
+  type EventResponse,
+  type PublishedEventsQuery,
+} from "@/lib/api/events";
 import EventCard from "./components/EventCard";
 import EventDetailModal from "./components/EventDetailModal";
+import EventFilterBar from "./components/EventFilterBar";
 import EventsLoading from "./loading";
 
-interface ExploreEventsPageProps {
-  searchParams: Promise<{ eventId?: string }>;
+interface ExploreEventsSearchParams {
+  q?: string;
+  city?: string;
+  freeOnly?: string;
+  maxPrice?: string;
+  ageRestriction?: string;
+  eventId?: string;
 }
+
+interface ExploreEventsPageProps {
+  searchParams: Promise<ExploreEventsSearchParams>;
+}
+
+const VALID_AGE_RESTRICTIONS = new Set<AgeRestriction>([
+  "ALL_AGES",
+  "THIRTEEN_PLUS",
+  "EIGHTEEN_PLUS",
+  "TWENTY_ONE_PLUS",
+]);
 
 async function ExploreEventsContent({
   searchParams,
 }: ExploreEventsPageProps) {
-  const { eventId } = await searchParams;
+  const params = await searchParams;
+  const q = params.q?.trim() ?? "";
+  const city = params.city?.trim() ?? "";
+  const freeOnly = params.freeOnly === "true";
+  const maxPriceRaw = params.maxPrice?.trim() ?? "";
+  const parsedMaxPrice = maxPriceRaw ? Number.parseFloat(maxPriceRaw) : Number.NaN;
+  const maxPrice =
+    !freeOnly && !Number.isNaN(parsedMaxPrice) && parsedMaxPrice >= 0
+      ? parsedMaxPrice
+      : undefined;
+  const ageRestriction =
+    params.ageRestriction &&
+    VALID_AGE_RESTRICTIONS.has(params.ageRestriction as AgeRestriction)
+      ? (params.ageRestriction as AgeRestriction)
+      : "";
+
+  const apiQuery: PublishedEventsQuery = {
+    ...(q ? { q } : {}),
+    ...(city ? { city } : {}),
+    ...(freeOnly ? { freeOnly: true } : {}),
+    ...(maxPrice !== undefined ? { maxPrice } : {}),
+    ...(ageRestriction ? { ageRestriction } : {}),
+  };
+
+  const filterParams = new URLSearchParams();
+  if (q) filterParams.set("q", q);
+  if (city) filterParams.set("city", city);
+  if (freeOnly) filterParams.set("freeOnly", "true");
+  if (maxPrice !== undefined) filterParams.set("maxPrice", String(maxPrice));
+  if (ageRestriction) filterParams.set("ageRestriction", ageRestriction);
+  const filterQuery = filterParams.toString();
+  const hasActiveFilters = filterQuery.length > 0;
+
   let events: EventResponse[] = [];
   let loadError: string | null = null;
 
   try {
-    events = await getPublishedEvents();
+    events = await getPublishedEvents(apiQuery);
   } catch (err: unknown) {
     loadError =
       err instanceof Error
@@ -25,7 +79,9 @@ async function ExploreEventsContent({
         : "Unable to load published events right now.";
   }
 
-  const parsedId = eventId ? Number.parseInt(eventId, 10) : Number.NaN;
+  const parsedId = params.eventId
+    ? Number.parseInt(params.eventId, 10)
+    : Number.NaN;
   const selectedEvent = Number.isNaN(parsedId)
     ? undefined
     : events.find((evt) => evt.id === parsedId);
@@ -59,6 +115,14 @@ async function ExploreEventsContent({
           </div>
         </header>
 
+        <EventFilterBar
+          initialQuery={q}
+          initialCity={city}
+          initialFreeOnly={freeOnly}
+          initialMaxPrice={maxPrice !== undefined ? String(maxPrice) : ""}
+          initialAgeRestriction={ageRestriction}
+        />
+
         {loadError ? (
           <div
             role="alert"
@@ -70,11 +134,23 @@ async function ExploreEventsContent({
         ) : events.length === 0 ? (
           <div className="mt-12 text-center py-16 px-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              No published events yet
+              {hasActiveFilters ? "No events found" : "No published events yet"}
             </h2>
             <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-              Check back soon for upcoming outdoor events.
+              {hasActiveFilters
+                ? "Try adjusting or clearing your search and filter criteria."
+                : "Check back soon for upcoming outdoor events."}
             </p>
+            {hasActiveFilters && (
+              <div className="mt-6">
+                <Link
+                  href="/events"
+                  className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                >
+                  Clear All Filters
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
           <section
@@ -82,7 +158,11 @@ async function ExploreEventsContent({
             className="mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
           >
             {events.map((evt) => (
-              <EventCard key={evt.id} event={evt} />
+              <EventCard
+                key={evt.id}
+                event={evt}
+                filterQuery={filterQuery || undefined}
+              />
             ))}
           </section>
         )}
