@@ -36,9 +36,6 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="event-detail-modal-title"
       onClick={handleClose}
     >
       <div
@@ -48,7 +45,6 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
         <div className="flex items-start justify-between gap-4 pb-4 border-b border-gray-200 dark:border-gray-800">
           <div>
             <h2
-              id="event-detail-modal-title"
               className="text-xl font-bold text-gray-900 dark:text-white"
             >
               {event.title}
@@ -72,7 +68,6 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
           <button
             type="button"
             onClick={handleClose}
-            aria-label="Close event details"
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-semibold leading-none p-1"
           >
             ✕

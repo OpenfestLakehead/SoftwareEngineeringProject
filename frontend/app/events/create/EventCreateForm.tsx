@@ -8,7 +8,7 @@ import {
   type AgeRestriction,
   type EventStatus,
   type EventResponse,
-} from "./actions";
+} from "@/lib/api/events";
 
 export default function EventCreateForm() {
   const [formData, setFormData] = useState({
@@ -226,7 +226,7 @@ export default function EventCreateForm() {
               onSelect={(selected) =>
                 setFormData({
                   ...formData,
-                  city: selected ? selected.label : "",
+                  city: selected ? selected.name : "",
                 })
               }
             />

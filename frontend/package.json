@@ -7,7 +7,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "generate:cities": "node scripts/generate-cities.ts",
     "test": "node --test tests/**/*.test.ts"
   },
   "dependencies": {

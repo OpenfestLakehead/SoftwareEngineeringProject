@@ -17,7 +17,7 @@ import {
   type EventStatus,
   type AgeRestriction,
   type UpdateEventPayload,
-} from "../events/actions";
+} from "@/lib/api/events";
 
 export default function CreatorDashboard() {
   const router = useRouter();
