@@ -1,6 +1,6 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import {
+  buildPublishedEventsQueryString,
   getPublishedEvents,
   type AgeRestriction,
   type EventResponse,
@@ -9,7 +9,6 @@ import {
 import EventCard from "./components/EventCard";
 import EventDetailModal from "./components/EventDetailModal";
 import EventFilterBar from "./components/EventFilterBar";
-import EventsLoading from "./loading";
 
 interface ExploreEventsSearchParams {
   q?: string;
@@ -24,55 +23,38 @@ interface ExploreEventsPageProps {
   searchParams: Promise<ExploreEventsSearchParams>;
 }
 
-const VALID_AGE_RESTRICTIONS = new Set<AgeRestriction>([
-  "ALL_AGES",
-  "THIRTEEN_PLUS",
-  "EIGHTEEN_PLUS",
-  "TWENTY_ONE_PLUS",
-]);
-
-async function ExploreEventsContent({
+export default async function ExploreEventsPage({
   searchParams,
 }: ExploreEventsPageProps) {
   const params = await searchParams;
   const q = params.q?.trim() ?? "";
   const city = params.city?.trim() ?? "";
   const freeOnly = params.freeOnly === "true";
-  const maxPriceRaw = params.maxPrice?.trim() ?? "";
-  const parsedMaxPrice = maxPriceRaw ? Number.parseFloat(maxPriceRaw) : Number.NaN;
-  const maxPrice =
-    !freeOnly && !Number.isNaN(parsedMaxPrice) && parsedMaxPrice >= 0
-      ? parsedMaxPrice
-      : undefined;
-  const ageRestriction =
-    params.ageRestriction &&
-    VALID_AGE_RESTRICTIONS.has(params.ageRestriction as AgeRestriction)
-      ? (params.ageRestriction as AgeRestriction)
-      : "";
+  const maxPrice = freeOnly ? "" : (params.maxPrice?.trim() ?? "");
+  const ageRestriction = (params.ageRestriction?.trim() ?? "") as
+    | AgeRestriction
+    | "";
 
-  const apiQuery: PublishedEventsQuery = {
-    ...(q ? { q } : {}),
-    ...(city ? { city } : {}),
-    ...(freeOnly ? { freeOnly: true } : {}),
-    ...(maxPrice !== undefined ? { maxPrice } : {}),
-    ...(ageRestriction ? { ageRestriction } : {}),
+  const query: PublishedEventsQuery = {
+    q,
+    city,
+    freeOnly,
+    maxPrice,
+    ageRestriction,
   };
-
-  const filterParams = new URLSearchParams();
-  if (q) filterParams.set("q", q);
-  if (city) filterParams.set("city", city);
-  if (freeOnly) filterParams.set("freeOnly", "true");
-  if (maxPrice !== undefined) filterParams.set("maxPrice", String(maxPrice));
-  if (ageRestriction) filterParams.set("ageRestriction", ageRestriction);
-  const filterQuery = filterParams.toString();
+  const filterQuery = buildPublishedEventsQueryString(query);
   const hasActiveFilters = filterQuery.length > 0;
 
   let events: EventResponse[] = [];
+  let loadError: string | null = null;
 
   try {
-    events = await getPublishedEvents(apiQuery);
+    events = await getPublishedEvents(query);
   } catch (err: unknown) {
-    // log error
+    loadError =
+      err instanceof Error
+        ? err.message
+        : "Unable to load published events right now.";
   }
 
   const parsedId = params.eventId
@@ -112,14 +94,20 @@ async function ExploreEventsContent({
         </header>
 
         <EventFilterBar
+          key={filterQuery}
           initialQuery={q}
           initialCity={city}
           initialFreeOnly={freeOnly}
-          initialMaxPrice={maxPrice !== undefined ? String(maxPrice) : ""}
+          initialMaxPrice={maxPrice}
           initialAgeRestriction={ageRestriction}
         />
 
-        {events.length === 0 ? (
+        {loadError ? (
+          <div className="mt-8 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-600 dark:text-red-400">
+            <p className="font-semibold">Unable to load events</p>
+            <p className="mt-1">{loadError}</p>
+          </div>
+        ) : events.length === 0 ? (
           <div className="mt-12 text-center py-16 px-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               {hasActiveFilters ? "No events found" : "No published events yet"}
@@ -142,7 +130,6 @@ async function ExploreEventsContent({
           </div>
         ) : (
           <section
-            aria-label="Published events"
             className="mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
           >
             {events.map((evt) => (
@@ -158,15 +145,5 @@ async function ExploreEventsContent({
         {selectedEvent && <EventDetailModal event={selectedEvent} />}
       </div>
     </main>
-  );
-}
-
-export default function ExploreEventsPage({
-  searchParams,
-}: ExploreEventsPageProps) {
-  return (
-    <Suspense fallback={<EventsLoading />}>
-      <ExploreEventsContent searchParams={searchParams} />
-    </Suspense>
   );
 }

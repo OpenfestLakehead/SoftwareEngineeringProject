@@ -1,4 +1,5 @@
-
+// DO NOT USE -- Legacy -- deleted after confirmed unuse
+// Use lib/api/events instead
 import { getCsrfToken } from "@/lib/api";
 import {
   getBackendUrl,

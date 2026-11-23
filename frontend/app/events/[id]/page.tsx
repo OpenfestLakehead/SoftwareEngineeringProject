@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import {
   getEventByIdAction,
   type EventResponse,
-} from "../actions";
+} from "@/lib/api/events";
 import RsvpButton from "../RsvpButton";
 
 function EventDetailsContent() {
