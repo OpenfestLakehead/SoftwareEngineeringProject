@@ -13,7 +13,8 @@ export type EventStatus =
 export interface CreateEventPayload {
   title: string;
   description: string | null;
-  location: string;
+  addressfield1: string;
+  city: string;
   capacity: number;
   ageRestriction: AgeRestriction;
   price: number;
@@ -36,6 +37,8 @@ export interface EventResponse {
   creatorEmail: string | null;
   title: string;
   description: string;
+  addressfield1: string;
+  city: string;
   location: string;
   capacity: number;
   ageRestriction: AgeRestriction;

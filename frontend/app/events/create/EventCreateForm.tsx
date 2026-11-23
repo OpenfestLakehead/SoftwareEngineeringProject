@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import CityAutocomplete from "@/components/shared/CityAutocomplete";
 import {
   createEventAction,
   type AgeRestriction,
@@ -13,7 +14,8 @@ export default function EventCreateForm() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    location: "",
+    addressfield1: "",
+    city: "",
     capacity: "",
     ageRestriction: "ALL_AGES" as AgeRestriction,
     price: "0.00",
@@ -28,7 +30,8 @@ export default function EventCreateForm() {
     setFormData({
       title: "",
       description: "",
-      location: "",
+      addressfield1: "",
+      city: "",
       capacity: "",
       ageRestriction: "ALL_AGES",
       price: "0.00",
@@ -47,8 +50,12 @@ export default function EventCreateForm() {
       newErrors.title = "Title cannot exceed 150 characters.";
     }
 
-    if (!formData.location.trim()) {
-      newErrors.location = "Location is required.";
+    if (!formData.addressfield1.trim()) {
+      newErrors.addressfield1 = "Address is required.";
+    }
+
+    if (!formData.city.trim()) {
+      newErrors.city = "City is required.";
     }
 
     const capacityNum = parseInt(formData.capacity, 10);
@@ -78,7 +85,8 @@ export default function EventCreateForm() {
     const payload = {
       title: formData.title.trim(),
       description: formData.description.trim() || null,
-      location: formData.location.trim(),
+      addressfield1: formData.addressfield1.trim(),
+      city: formData.city.trim(),
       capacity: parseInt(formData.capacity, 10),
       ageRestriction: formData.ageRestriction,
       price: parseFloat(formData.price),
@@ -185,27 +193,49 @@ export default function EventCreateForm() {
           />
         </div>
 
-        {/* Location */}
-        <div>
-          <label
-            htmlFor="location"
-            className="block text-sm font-medium text-gray-800 dark:text-zinc-200"
-          >
-            Location / Venue <span className="text-red-500 dark:text-red-400">*</span>
-          </label>
-          <input
-            id="location"
-            type="text"
-            value={formData.location}
-            onChange={(e) =>
-              setFormData({ ...formData, location: e.target.value })
-            }
-            placeholder="e.g. Zilker Park, Austin, TX"
-            className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-3 py-2 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm"
-          />
-          {errors.location && (
-            <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.location}</p>
-          )}
+        {/* Address Line 1 & City */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label
+              htmlFor="addressfield1"
+              className="block text-sm font-medium text-gray-800 dark:text-zinc-200"
+            >
+              Address <span className="text-red-500 dark:text-red-400">*</span>
+            </label>
+            <input
+              id="addressfield1"
+              type="text"
+              value={formData.addressfield1}
+              onChange={(e) =>
+                setFormData({ ...formData, addressfield1: e.target.value })
+              }
+              placeholder="e.g. Zilker Park, 2100 Barton Springs Rd"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-3 py-2 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm"
+            />
+            {errors.addressfield1 && (
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {errors.addressfield1}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <CityAutocomplete
+              label="City *"
+              value={formData.city}
+              onSelect={(selected) =>
+                setFormData({
+                  ...formData,
+                  city: selected ? selected.label : "",
+                })
+              }
+            />
+            {errors.city && (
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {errors.city}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

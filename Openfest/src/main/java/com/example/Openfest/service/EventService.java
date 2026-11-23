@@ -49,7 +49,8 @@ public class EventService {
                 creator,
                 request.getTitle().trim(),
                 request.getDescription() != null ? request.getDescription().trim() : null,
-                request.getLocation().trim(),
+                request.getAddressfield1().trim(),
+                request.getCity().trim(),
                 request.getCapacity(),
                 request.getAgeRestriction(),
                 request.getPrice(),
@@ -93,8 +94,11 @@ public class EventService {
                     if (normalizedCity == null) {
                         return true;
                     }
-                    return event.getLocation() != null
+                    boolean matchesCity = event.getCity() != null
+                            && event.getCity().toLowerCase(Locale.ROOT).contains(normalizedCity);
+                    boolean matchesLocation = event.getLocation() != null
                             && event.getLocation().toLowerCase(Locale.ROOT).contains(normalizedCity);
+                    return matchesCity || matchesLocation;
                 })
                 .filter(event -> {
                     if (Boolean.TRUE.equals(freeOnly)) {

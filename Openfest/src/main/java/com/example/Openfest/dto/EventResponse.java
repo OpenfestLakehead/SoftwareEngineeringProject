@@ -14,6 +14,8 @@ public class EventResponse {
     private String creatorEmail;
     private String title;
     private String description;
+    private String addressfield1;
+    private String city;
     private String location;
     private Integer capacity;
     private AgeRestriction ageRestriction;
@@ -33,6 +35,8 @@ public class EventResponse {
         }
         response.title = event.getTitle();
         response.description = event.getDescription();
+        response.addressfield1 = event.getAddressfield1();
+        response.city = event.getCity();
         response.location = event.getLocation();
         response.capacity = event.getCapacity();
         response.ageRestriction = event.getAgeRestriction();
@@ -60,6 +64,14 @@ public class EventResponse {
 
     public String getDescription() {
         return description;
+    }
+
+    public String getAddressfield1() {
+        return addressfield1;
+    }
+
+    public String getCity() {
+        return city;
     }
 
     public String getLocation() {

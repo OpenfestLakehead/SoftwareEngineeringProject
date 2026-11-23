@@ -60,7 +60,8 @@ class EventServiceTest {
         CreateEventRequest request = new CreateEventRequest(
                 "Outdoor Music Fest",
                 "Great summer outdoors music",
-                "Central Park, NY",
+                "Central Park",
+                "New York",
                 500,
                 AgeRestriction.ALL_AGES,
                 new BigDecimal("25.00"),
@@ -74,7 +75,9 @@ class EventServiceTest {
 
         assertNotNull(response);
         assertEquals("Outdoor Music Fest", response.getTitle());
-        assertEquals("Central Park, NY", response.getLocation());
+        assertEquals("Central Park", response.getAddressfield1());
+        assertEquals("New York", response.getCity());
+        assertEquals("Central Park, New York", response.getLocation());
         assertEquals(500, response.getCapacity());
         assertEquals(EventStatus.DRAFT, response.getStatus());
         assertEquals("creator@openfest.com", response.getCreatorEmail());
@@ -87,6 +90,7 @@ class EventServiceTest {
                 "Food Truck Rally",
                 "Delicious food outdoors",
                 "Town Square",
+                "Thunder Bay",
                 200,
                 AgeRestriction.EIGHTEEN_PLUS,
                 BigDecimal.ZERO,
@@ -100,6 +104,8 @@ class EventServiceTest {
 
         assertNotNull(response);
         assertEquals("Food Truck Rally", response.getTitle());
+        assertEquals("Town Square", response.getAddressfield1());
+        assertEquals("Thunder Bay", response.getCity());
         assertEquals(EventStatus.PUBLISHED, response.getStatus());
         assertEquals("mock-creator@openfest.com", response.getCreatorEmail());
     }
