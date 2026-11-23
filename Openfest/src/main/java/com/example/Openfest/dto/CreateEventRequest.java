@@ -18,8 +18,11 @@ public class CreateEventRequest {
 
     private String description;
 
-    @NotBlank(message = "Event location is required")
-    private String location;
+    @NotBlank(message = "Address is required")
+    private String addressfield1;
+
+    @NotBlank(message = "City is required")
+    private String city;
 
     @NotNull(message = "Capacity limit is required")
     @Min(value = 1, message = "Capacity must be at least 1")
@@ -38,12 +41,13 @@ public class CreateEventRequest {
     public CreateEventRequest() {
     }
 
-    public CreateEventRequest(String title, String description, String location,
+    public CreateEventRequest(String title, String description, String addressfield1, String city,
                               Integer capacity, AgeRestriction ageRestriction,
                               BigDecimal price, EventStatus status) {
         this.title = title;
         this.description = description;
-        this.location = location;
+        this.addressfield1 = addressfield1;
+        this.city = city;
         this.capacity = capacity;
         this.ageRestriction = ageRestriction;
         this.price = price;
@@ -66,12 +70,20 @@ public class CreateEventRequest {
         this.description = description;
     }
 
-    public String getLocation() {
-        return location;
+    public String getAddressfield1() {
+        return addressfield1;
     }
 
-    public void setLocation(String location) {
-        this.location = location;
+    public void setAddressfield1(String addressfield1) {
+        this.addressfield1 = addressfield1;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
     }
 
     public Integer getCapacity() {

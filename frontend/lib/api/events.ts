@@ -1,3 +1,5 @@
+import { getCsrfToken } from "@/lib/api";
+
 export type AgeRestriction =
   | "ALL_AGES"
   | "THIRTEEN_PLUS"
@@ -13,7 +15,8 @@ export type EventStatus =
 export interface CreateEventPayload {
   title: string;
   description: string | null;
-  location: string;
+  addressfield1: string;
+  city: string;
   capacity: number;
   ageRestriction: AgeRestriction;
   price: number;
@@ -36,6 +39,8 @@ export interface EventResponse {
   creatorEmail: string | null;
   title: string;
   description: string;
+  addressfield1: string;
+  city: string;
   location: string;
   capacity: number;
   ageRestriction: AgeRestriction;
@@ -48,8 +53,8 @@ export interface PublishedEventsQuery {
   q?: string;
   city?: string;
   freeOnly?: boolean;
-  maxPrice?: number;
-  ageRestriction?: AgeRestriction;
+  maxPrice?: number | string;
+  ageRestriction?: AgeRestriction | "";
 }
 
 export function getBackendUrl(): string {
@@ -87,12 +92,9 @@ export async function handleResponse<T>(
   return response.json() as Promise<T>;
 }
 
-/**
- * Fetch public PUBLISHED events from GET /api/events.
- */
-export async function getPublishedEvents(
+export function buildPublishedEventsQueryString(
   query: PublishedEventsQuery = {},
-): Promise<EventResponse[]> {
+): string {
   const params = new URLSearchParams();
 
   if (query.q?.trim()) {
@@ -101,17 +103,26 @@ export async function getPublishedEvents(
   if (query.city?.trim()) {
     params.set("city", query.city.trim());
   }
-  if (query.freeOnly !== undefined) {
-    params.set("freeOnly", String(query.freeOnly));
+  if (query.freeOnly) {
+    params.set("freeOnly", "true");
   }
-  if (query.maxPrice !== undefined) {
-    params.set("maxPrice", String(query.maxPrice));
+  if (query.maxPrice !== undefined && String(query.maxPrice).trim() !== "") {
+    params.set("maxPrice", String(query.maxPrice).trim());
   }
   if (query.ageRestriction) {
     params.set("ageRestriction", query.ageRestriction);
   }
 
-  const qs = params.toString();
+  return params.toString();
+}
+
+/**
+ * Fetch public PUBLISHED events from GET /api/events.
+ */
+export async function getPublishedEvents(
+  query: PublishedEventsQuery = {},
+): Promise<EventResponse[]> {
+  const qs = buildPublishedEventsQueryString(query);
   const url = `${getBackendUrl()}/api/events${qs ? `?${qs}` : ""}`;
 
   const response = await fetch(url, {
@@ -122,5 +133,104 @@ export async function getPublishedEvents(
   return handleResponse<EventResponse[]>(
     response,
     "Failed to fetch published events",
+  );
+}
+
+// Create event
+export async function createEventAction(
+  payload: CreateEventPayload,
+): Promise<EventResponse> {
+  const backendUrl = getBackendUrl();
+  const csrf = await getCsrfToken();
+
+  const response = await fetch(`${backendUrl}/api/events`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      [csrf.headerName]: csrf.token,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return handleResponse<EventResponse>(response, "Failed to create event");
+}
+
+// Get creator's events
+export async function getCreatorEventsAction(): Promise<EventResponse[]> {
+  const backendUrl = getBackendUrl();
+
+  const response = await fetch(`${backendUrl}/api/events/creator`, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  return handleResponse<EventResponse[]>(response, "Failed to fetch events");
+}
+
+// Update event details
+export async function updateEventAction(
+  id: number,
+  payload: UpdateEventPayload,
+): Promise<EventResponse> {
+  const backendUrl = getBackendUrl();
+  const csrf = await getCsrfToken();
+
+  const response = await fetch(`${backendUrl}/api/events/${id}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      [csrf.headerName]: csrf.token,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return handleResponse<EventResponse>(response, "Failed to update event");
+}
+
+// Update event status
+export async function updateEventStatusAction(
+  id: number,
+  status: EventStatus,
+): Promise<EventResponse> {
+  const backendUrl = getBackendUrl();
+  const csrf = await getCsrfToken();
+
+  const response = await fetch(`${backendUrl}/api/events/${id}/status`, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      [csrf.headerName]: csrf.token,
+    },
+    body: JSON.stringify({ status }),
+  });
+
+  return handleResponse<EventResponse>(
+    response,
+    "Failed to update event status",
+  );
+}
+
+// Get a single event by ID
+export async function getEventByIdAction(
+  id: number
+): Promise<EventResponse> {
+  const backendUrl = getBackendUrl();
+
+  const response = await fetch(
+    `${backendUrl}/api/events/${id}`,
+    {
+      method: "GET",
+      credentials: "include",
+      cache: "no-store",
+    }
+  );
+
+  return handleResponse<EventResponse>(
+    response,
+    "Failed to fetch event details"
   );
 }
