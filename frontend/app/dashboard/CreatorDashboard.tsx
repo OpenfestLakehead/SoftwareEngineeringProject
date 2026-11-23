@@ -7,6 +7,12 @@ import GoogleMapsDirections from "../GoogleMapsDirections";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, logout } from "@/lib/api";
 import {
+  formatAgeRestriction,
+  formatEventPrice,
+} from "@/lib/helpers/events";
+import GoogleMapsDirections from "@/app/GoogleMapsDirections";
+import EventAttendees from "./EventAttendees";
+import {
   getCreatorEventsAction,
   updateEventAction,
   updateEventStatusAction,
@@ -14,7 +20,7 @@ import {
   type EventStatus,
   type AgeRestriction,
   type UpdateEventPayload,
-} from "../events/actions";
+} from "@/lib/api/events";
 
 export default function CreatorDashboard() {
   const router = useRouter();
@@ -279,28 +285,28 @@ export default function CreatorDashboard() {
       case "PUBLISHED":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
-            ● Published
+            Published
           </span>
         );
 
       case "DRAFT":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-            ● Draft
+            Draft
           </span>
         );
 
       case "CLOSED":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">
-            ● Closed
+            Closed
           </span>
         );
 
       case "SOLD_OUT":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">
-            ● Sold Out
+            Sold Out
           </span>
         );
 
@@ -310,21 +316,6 @@ export default function CreatorDashboard() {
             {status}
           </span>
         );
-    }
-  };
-
-  const formatAgeRestriction = (age: string) => {
-    switch (age) {
-      case "ALL_AGES":
-        return "All Ages";
-      case "THIRTEEN_PLUS":
-        return "13+";
-      case "EIGHTEEN_PLUS":
-        return "18+";
-      case "TWENTY_ONE_PLUS":
-        return "21+";
-      default:
-        return age;
     }
   };
 
@@ -373,7 +364,7 @@ export default function CreatorDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-zinc-100">
-            Event Creator Dashboard
+            Creator Dashboard
           </h1>
 
           <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400">
@@ -381,44 +372,34 @@ export default function CreatorDashboard() {
             edit information, or close sign-ups.
           </p>
 
-          <p className="mt-2 text-sm text-indigo-600 dark:text-indigo-400">
+          <p className="mt-2 text-sm text-blue-600 dark:text-blue-400">
             Signed in as: {currentUser}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={fetchEvents}
             disabled={isLoading}
-            className="px-3.5 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors disabled:opacity-50"
+            className="px-3.5 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
             title="Refresh event list"
           >
-            {isLoading ? "Refreshing..." : "↻ Refresh"}
+            {isLoading ? "Refreshing..." : "Refresh"}
           </button>
 
           <Link
             href="/events/create"
-            className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-zinc-900 transition-colors"
+            className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-zinc-900 transition-colors"
           >
-            + Create New Event
+            Create New Event
           </Link>
-          
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="px-4 py-2 text-sm font-semibold rounded-lg border border-red-500/40 bg-red-950/30 text-red-400 hover:bg-red-900/40 transition-colors disabled:opacity-50"
-          >
-            {isLoggingOut ? "Logging out..." : "Logout"}
-          </button>
         </div>
       </div>
 
       {/* Notifications */}
       {actionSuccessMessage && (
         <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-300 text-sm flex items-center justify-between">
-          <span>✓ {actionSuccessMessage}</span>
+          <span>{actionSuccessMessage}</span>
 
           <button
             onClick={() => setActionSuccessMessage(null)}
@@ -431,7 +412,7 @@ export default function CreatorDashboard() {
 
       {errorMessage && (
         <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 dark:bg-red-950/40 dark:border-red-900/60 dark:text-red-300 text-sm flex items-center justify-between">
-          <span>⚠ {errorMessage}</span>
+          <span>{errorMessage}</span>
 
           <button
             onClick={() => setErrorMessage(null)}
@@ -509,7 +490,7 @@ export default function CreatorDashboard() {
             placeholder="Search events by title or location..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-3 pr-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full pl-3 pr-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -526,7 +507,7 @@ export default function CreatorDashboard() {
               onClick={() => setSelectedStatus(st)}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
                 selectedStatus === st
-                  ? "bg-indigo-600 text-white"
+                  ? "bg-blue-600 text-white"
                   : "bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 hover:bg-gray-200 dark:hover:bg-zinc-700"
               }`}
             >
@@ -539,7 +520,7 @@ export default function CreatorDashboard() {
       {/* Events List */}
       {isLoading ? (
         <div className="py-16 text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-indigo-600 border-t-transparent"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
 
           <p className="mt-4 text-sm text-gray-500 dark:text-zinc-400">
             Loading your events...
@@ -547,11 +528,7 @@ export default function CreatorDashboard() {
         </div>
       ) : filteredEvents.length === 0 ? (
         <div className="text-center py-16 px-4 bg-white dark:bg-zinc-900 rounded-xl border border-dashed border-gray-300 dark:border-zinc-800">
-          <div className="mx-auto w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl font-bold">
-            📅
-          </div>
-
-          <h3 className="mt-3 text-lg font-semibold text-gray-900 dark:text-zinc-100">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">
             {events.length === 0
               ? "No events created yet"
               : "No matching events found"}
@@ -567,9 +544,9 @@ export default function CreatorDashboard() {
             <div className="mt-6">
               <Link
                 href="/events/create"
-                className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-colors"
+                className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors"
               >
-                + Create Your First Event
+                Create Your First Event
               </Link>
             </div>
           )}
@@ -632,9 +609,7 @@ export default function CreatorDashboard() {
                     </span>
 
                     <span className="font-semibold text-gray-800 dark:text-zinc-200">
-                      {evt.price === 0
-                        ? "Free RSVP"
-                        : `$${evt.price.toFixed(2)}`}
+                      {formatEventPrice(evt.price)}
                     </span>
                   </div>
 
@@ -658,6 +633,12 @@ export default function CreatorDashboard() {
                     </span>
                   </div>
                 </div>
+
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <GoogleMapsDirections location={evt.location} />
+                </div>
+
+                <EventAttendees eventId={evt.id} />
               </div>
 
               {/* Action Buttons Bar */}
@@ -666,7 +647,7 @@ export default function CreatorDashboard() {
                   onClick={() => handleOpenEdit(evt)}
                   className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
                 >
-                  ✏ Edit
+                  Edit
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -730,9 +711,9 @@ export default function CreatorDashboard() {
 
               <button
                 onClick={() => setEditingEvent(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 text-xl font-semibold leading-none"
+                className="px-2.5 py-1 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
-                ✕
+                Close
               </button>
             </div>
 
@@ -751,7 +732,7 @@ export default function CreatorDashboard() {
                       title: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
                 {editErrors.title && (
@@ -775,7 +756,7 @@ export default function CreatorDashboard() {
                       description: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -793,7 +774,7 @@ export default function CreatorDashboard() {
                       location: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
                 {editErrors.location && (
@@ -820,7 +801,7 @@ export default function CreatorDashboard() {
                           parseInt(e.target.value, 10) || 0,
                       })
                     }
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
 
                   {editErrors.capacity && (
@@ -844,7 +825,7 @@ export default function CreatorDashboard() {
                           e.target.value as AgeRestriction,
                       })
                     }
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="ALL_AGES">All Ages</option>
                     <option value="THIRTEEN_PLUS">13+ Only</option>
@@ -874,7 +855,7 @@ export default function CreatorDashboard() {
                           parseFloat(e.target.value) || 0,
                       })
                     }
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
 
                   {editErrors.price && (
@@ -898,7 +879,7 @@ export default function CreatorDashboard() {
                           e.target.value as EventStatus,
                       })
                     }
-                    className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="DRAFT">Draft</option>
                     <option value="PUBLISHED">Published</option>
@@ -922,7 +903,7 @@ export default function CreatorDashboard() {
                 type="button"
                 disabled={isUpdating}
                 onClick={handleSaveEdit}
-                className="px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
               >
                 {isUpdating ? "Saving..." : "Save Changes"}
               </button>

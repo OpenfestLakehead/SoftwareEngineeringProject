@@ -1,80 +1,23 @@
-
+// DO NOT USE -- Legacy -- deleted after confirmed unuse
+// Use lib/api/events instead
 import { getCsrfToken } from "@/lib/api";
+import {
+  getBackendUrl,
+  handleResponse,
+  type AgeRestriction,
+  type CreateEventPayload,
+  type EventResponse,
+  type EventStatus,
+  type UpdateEventPayload,
+} from "@/lib/api/events";
 
-export type AgeRestriction =
-  | "ALL_AGES"
-  | "THIRTEEN_PLUS"
-  | "EIGHTEEN_PLUS"
-  | "TWENTY_ONE_PLUS";
-
-export type EventStatus =
-  | "DRAFT"
-  | "PUBLISHED"
-  | "CLOSED"
-  | "SOLD_OUT";
-
-export interface CreateEventPayload {
-  title: string;
-  description: string | null;
-  location: string;
-  capacity: number;
-  ageRestriction: AgeRestriction;
-  price: number;
-  status: EventStatus;
-}
-
-export interface UpdateEventPayload {
-  title: string;
-  description: string | null;
-  location: string;
-  capacity: number;
-  ageRestriction: AgeRestriction;
-  price: number;
-  status?: EventStatus;
-}
-
-export interface EventResponse {
-  id: number;
-  creatorId: number | null;
-  creatorEmail: string | null;
-  title: string;
-  description: string;
-  location: string;
-  capacity: number;
-  ageRestriction: AgeRestriction;
-  price: number;
-  status: EventStatus;
-  createdAt: string;
-}
-
-const getBackendUrl = () =>
-  process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:8080";
-
-// Shared error handling
-async function handleResponse<T>(
-  response: Response,
-  fallbackMessage: string
-): Promise<T> {
-  if (!response.ok) {
-    let errorMessage =
-      `${fallbackMessage} (${response.status})`;
-
-    try {
-      const data = await response.json();
-
-      if (typeof data?.message === "string") {
-        errorMessage = data.message;
-      }
-    } catch {
-      // Keep the fallback error message.
-    }
-
-    throw new Error(errorMessage);
-  }
-
-  return response.json() as Promise<T>;
-}
+export type {
+  AgeRestriction,
+  CreateEventPayload,
+  EventResponse,
+  EventStatus,
+  UpdateEventPayload,
+};
 
 // Create event
 export async function createEventAction(
@@ -176,8 +119,9 @@ export async function updateEventStatusAction(
   );
 }
 
-// Get a single event by ID
-export async function getEventByIdAction(
+
+ // Get a single event by ID
+ export async function getEventByIdAction(
   id: number
 ): Promise<EventResponse> {
   const backendUrl = getBackendUrl();
@@ -193,6 +137,7 @@ export async function getEventByIdAction(
 
   return handleResponse<EventResponse>(
     response,
-    "Failed to fetch event"
+    "Failed to fetch event details"
   );
 }
+

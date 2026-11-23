@@ -3,10 +3,16 @@ package com.example.Openfest.security;
 
 import com.example.Openfest.config.SecurityConfig;
 import com.example.Openfest.controller.AuthController;
+import com.example.Openfest.controller.EventController;
+import com.example.Openfest.dto.EventResponse;
+import com.example.Openfest.entity.AgeRestriction;
+import com.example.Openfest.entity.Event;
+import com.example.Openfest.entity.EventStatus;
 import com.example.Openfest.entity.User;
 import com.example.Openfest.repository.UserRepository;
 import com.example.Openfest.service.AuthService;
 import com.example.Openfest.service.CustomUserDetailsService;
+import com.example.Openfest.service.EventService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +26,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -46,7 +54,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * Database access is mocked using Mockito.
  */
-@WebMvcTest(controllers = AuthController.class)
+@WebMvcTest(controllers = {AuthController.class, EventController.class})
 @Import({
     SecurityConfig.class,
     CustomUserDetailsService.class
@@ -70,6 +78,9 @@ class AuthenticationIntegrationTest {
 
     @MockitoBean
     private AuthService authService;
+
+    @MockitoBean
+    private EventService eventService;
 
     /**
      * Prepare an existing user before every test.
@@ -314,5 +325,43 @@ class AuthenticationIntegrationTest {
             );
 
         assertTrue(session.isInvalid());
+    }
+
+    // ========================================
+    // TEST 11: PUBLIC EVENT DISCOVERY
+    // ========================================
+
+    @Test
+    void anonymousPublicEventDiscoveryIsPermitted()
+            throws Exception {
+
+        Event event = new Event(
+            new User("creator@openfest.com", "hashedPassword"),
+            "Lakehead Music Fest",
+            "Outdoor concert",
+            "Thunder Bay, Ontario, Canada",
+            250,
+            AgeRestriction.ALL_AGES,
+            BigDecimal.ZERO,
+            EventStatus.PUBLISHED
+        );
+
+        when(eventService.getPublishedEvents(null, null, null, null, null))
+            .thenReturn(List.of(EventResponse.fromEntity(event)));
+
+        mvc.perform(get("/api/events"))
+            .andExpect(status().isOk())
+            .andExpect(
+                jsonPath("$[0].title")
+                    .value("Lakehead Music Fest")
+            )
+            .andExpect(
+                jsonPath("$[0].location")
+                    .value("Thunder Bay, Ontario, Canada")
+            )
+            .andExpect(
+                jsonPath("$[0].status")
+                    .value("PUBLISHED")
+            );
     }
 }

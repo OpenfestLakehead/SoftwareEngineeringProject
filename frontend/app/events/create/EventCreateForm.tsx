@@ -1,19 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import CityAutocomplete from "@/components/shared/CityAutocomplete";
+import { useRouter } from "next/navigation";
+import { getCurrentUser } from "@/lib/api";
 import {
   createEventAction,
   type AgeRestriction,
   type EventStatus,
   type EventResponse,
-} from "./actions";
+} from "@/lib/api/events";
 
 export default function EventCreateForm() {
+  const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    location: "",
+    addressfield1: "",
+    city: "",
     capacity: "",
     ageRestriction: "ALL_AGES" as AgeRestriction,
     price: "0.00",
@@ -24,11 +31,34 @@ export default function EventCreateForm() {
   const [createdEvent, setCreatedEvent] = useState<EventResponse | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
 
+  useEffect(() => {
+    let active = true;
+
+    getCurrentUser()
+      .then((user) => {
+        if (!active) return;
+        if (!user) {
+          router.replace("/login");
+          return;
+        }
+        setAuthChecked(true);
+      })
+      .catch(() => {
+        if (!active) return;
+        router.replace("/login");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [router]);
+
   const resetForm = () => {
     setFormData({
       title: "",
       description: "",
-      location: "",
+      addressfield1: "",
+      city: "",
       capacity: "",
       ageRestriction: "ALL_AGES",
       price: "0.00",
@@ -47,8 +77,12 @@ export default function EventCreateForm() {
       newErrors.title = "Title cannot exceed 150 characters.";
     }
 
-    if (!formData.location.trim()) {
-      newErrors.location = "Location is required.";
+    if (!formData.addressfield1.trim()) {
+      newErrors.addressfield1 = "Address is required.";
+    }
+
+    if (!formData.city.trim()) {
+      newErrors.city = "City is required.";
     }
 
     const capacityNum = parseInt(formData.capacity, 10);
@@ -78,7 +112,8 @@ export default function EventCreateForm() {
     const payload = {
       title: formData.title.trim(),
       description: formData.description.trim() || null,
-      location: formData.location.trim(),
+      addressfield1: formData.addressfield1.trim(),
+      city: formData.city.trim(),
       capacity: parseInt(formData.capacity, 10),
       ageRestriction: formData.ageRestriction,
       price: parseFloat(formData.price),
@@ -95,6 +130,16 @@ export default function EventCreateForm() {
       setIsSubmitting(false);
     }
   };
+
+  if (!authChecked) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Verifying your session...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -125,14 +170,14 @@ export default function EventCreateForm() {
               href="/dashboard"
               className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm transition-colors"
             >
-              View in Dashboard →
+              View in Dashboard
             </Link>
             <button
               type="button"
               onClick={resetForm}
               className="px-4 py-2 text-xs font-medium rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-zinc-800 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-50 dark:hover:bg-zinc-700 transition-colors"
             >
-              + Create Another Event
+              Create Another Event
             </button>
           </div>
         </div>
@@ -158,7 +203,7 @@ export default function EventCreateForm() {
               setFormData({ ...formData, title: e.target.value })
             }
             placeholder="e.g. Austin Outdoor Summer Jam"
-            className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-3 py-2 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm"
+            className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-3 py-2 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm"
           />
           {errors.title && (
             <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.title}</p>
@@ -181,31 +226,53 @@ export default function EventCreateForm() {
               setFormData({ ...formData, description: e.target.value })
             }
             placeholder="Provide attendees with key information about the event..."
-            className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-3 py-2 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm"
+            className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-3 py-2 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm"
           />
         </div>
 
-        {/* Location */}
-        <div>
-          <label
-            htmlFor="location"
-            className="block text-sm font-medium text-gray-800 dark:text-zinc-200"
-          >
-            Location / Venue <span className="text-red-500 dark:text-red-400">*</span>
-          </label>
-          <input
-            id="location"
-            type="text"
-            value={formData.location}
-            onChange={(e) =>
-              setFormData({ ...formData, location: e.target.value })
-            }
-            placeholder="e.g. Zilker Park, Austin, TX"
-            className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-3 py-2 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm"
-          />
-          {errors.location && (
-            <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.location}</p>
-          )}
+        {/* Address Line 1 & City */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label
+              htmlFor="addressfield1"
+              className="block text-sm font-medium text-gray-800 dark:text-zinc-200"
+            >
+              Address <span className="text-red-500 dark:text-red-400">*</span>
+            </label>
+            <input
+              id="addressfield1"
+              type="text"
+              value={formData.addressfield1}
+              onChange={(e) =>
+                setFormData({ ...formData, addressfield1: e.target.value })
+              }
+              placeholder="e.g. Zilker Park, 2100 Barton Springs Rd"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-3 py-2 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm"
+            />
+            {errors.addressfield1 && (
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {errors.addressfield1}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <CityAutocomplete
+              label="City *"
+              value={formData.city}
+              onSelect={(selected) =>
+                setFormData({
+                  ...formData,
+                  city: selected ? selected.name : "",
+                })
+              }
+            />
+            {errors.city && (
+              <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {errors.city}
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -226,7 +293,7 @@ export default function EventCreateForm() {
                 setFormData({ ...formData, capacity: e.target.value })
               }
               placeholder="e.g. 250"
-              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-3 py-2 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-3 py-2 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm"
             />
             {errors.capacity && (
               <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.capacity}</p>
@@ -250,7 +317,7 @@ export default function EventCreateForm() {
                   ageRestriction: e.target.value as AgeRestriction,
                 })
               }
-              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-3 py-2 text-gray-900 dark:text-zinc-100 shadow-sm focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 px-3 py-2 text-gray-900 dark:text-zinc-100 shadow-sm focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm"
             >
               <option value="ALL_AGES" className="dark:bg-zinc-800 dark:text-zinc-100">All Ages</option>
               <option value="THIRTEEN_PLUS" className="dark:bg-zinc-800 dark:text-zinc-100">13+ Only</option>
@@ -266,7 +333,7 @@ export default function EventCreateForm() {
             htmlFor="price"
             className="block text-sm font-medium text-gray-800 dark:text-zinc-200"
           >
-            Ticket Price (USD) <span className="text-red-500 dark:text-red-400">*</span>
+            Ticket Price (CAD) <span className="text-red-500 dark:text-red-400">*</span>
           </label>
           <div className="relative mt-1 rounded-md shadow-sm">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -282,7 +349,7 @@ export default function EventCreateForm() {
                 setFormData({ ...formData, price: e.target.value })
               }
               placeholder="0.00"
-              className="block w-full rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 pl-7 pr-3 py-2 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:focus:ring-indigo-400 sm:text-sm"
+              className="block w-full rounded-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 pl-7 pr-3 py-2 text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-blue-500 dark:focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm"
             />
           </div>
           <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">
@@ -299,7 +366,7 @@ export default function EventCreateForm() {
             type="button"
             disabled={isSubmitting}
             onClick={() => handleSubmit("DRAFT")}
-            className="w-full sm:w-auto px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-zinc-900 disabled:opacity-50 transition-colors"
+            className="w-full sm:w-auto px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-zinc-200 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-zinc-900 disabled:opacity-50 transition-colors"
           >
             {isSubmitting ? "Saving..." : "Save as Draft"}
           </button>
@@ -307,7 +374,7 @@ export default function EventCreateForm() {
             type="button"
             disabled={isSubmitting}
             onClick={() => handleSubmit("PUBLISHED")}
-            className="w-full sm:w-auto px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-zinc-900 disabled:opacity-50 transition-colors"
+            className="w-full sm:w-auto px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-zinc-900 disabled:opacity-50 transition-colors"
           >
             {isSubmitting ? "Publishing..." : "Publish Event"}
           </button>
