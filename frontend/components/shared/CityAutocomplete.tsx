@@ -124,7 +124,8 @@ export default function CityAutocomplete({
             setInputValue(next);
             setIsOpen(true);
             setActiveIndex(-1);
-            if (!next.trim() && value) {
+            if (value) {
+              setPrevPropValue("");
               onSelect(null);
             }
           }}

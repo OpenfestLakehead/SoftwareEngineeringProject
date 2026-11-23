@@ -23,15 +23,15 @@ test("cities.json stays in sync with parseCitiesCsv(cities.csv)", () => {
   assert.deepEqual(parsed, citiesJson);
 });
 
-test("searchCities matches only the city name column and formats as name, subcountry, country", () => {
+test("searchCities matches only the city name column and formats as city name", () => {
   const torontoResults = searchCities("Toronto");
   assert.ok(torontoResults.length > 0);
   assert.equal(torontoResults[0].name, "Toronto");
-  assert.equal(torontoResults[0].label, "Toronto, Ontario, Canada");
+  assert.equal(torontoResults[0].label, "Toronto");
 
   // Case-insensitive and prefix-first
   const thunderResults = searchCities("thunder");
-  assert.ok(thunderResults.some((c) => c.label === "Thunder Bay, Ontario, Canada"));
+  assert.ok(thunderResults.some((c) => c.label === "Thunder Bay"));
 
   // Empty / whitespace / nonexistent queries
   assert.deepEqual(searchCities(""), []);
@@ -54,9 +54,9 @@ test("isValidCityCombination accepts valid rows and rejects mismatched or nonexi
   assert.equal(isValidCityCombination("Toronto", "Ontario", ""), false);
 });
 
-test("formatCityLabel formats as name, subcountry, country", () => {
+test("formatCityLabel formats as city name", () => {
   assert.equal(
     formatCityLabel({ name: "Kingston", subcountry: "Ontario", country: "Canada" }),
-    "Kingston, Ontario, Canada",
+    "Kingston",
   );
 });

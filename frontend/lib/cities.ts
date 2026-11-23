@@ -27,7 +27,7 @@ const VALID_COMBINATIONS = new Set<string>(
 export function formatCityLabel(
   city: Pick<CityRecord, "name" | "subcountry" | "country">,
 ): string {
-  return `${city.name}, ${city.subcountry}, ${city.country}`;
+  return `${city.name}`;
 }
 
 /**

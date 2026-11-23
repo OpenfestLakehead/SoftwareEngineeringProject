@@ -68,15 +68,11 @@ async function ExploreEventsContent({
   const hasActiveFilters = filterQuery.length > 0;
 
   let events: EventResponse[] = [];
-  let loadError: string | null = null;
 
   try {
     events = await getPublishedEvents(apiQuery);
   } catch (err: unknown) {
-    loadError =
-      err instanceof Error
-        ? err.message
-        : "Unable to load published events right now.";
+    // log error
   }
 
   const parsedId = params.eventId
@@ -123,15 +119,7 @@ async function ExploreEventsContent({
           initialAgeRestriction={ageRestriction}
         />
 
-        {loadError ? (
-          <div
-            role="alert"
-            className="mt-8 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30 p-4 text-sm text-red-600 dark:text-red-400"
-          >
-            <p className="font-semibold">Unable to load events</p>
-            <p className="mt-1">{loadError}</p>
-          </div>
-        ) : events.length === 0 ? (
+        {events.length === 0 ? (
           <div className="mt-12 text-center py-16 px-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
               {hasActiveFilters ? "No events found" : "No published events yet"}
