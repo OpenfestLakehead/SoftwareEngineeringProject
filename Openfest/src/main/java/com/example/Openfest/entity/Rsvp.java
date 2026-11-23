@@ -1,4 +1,3 @@
-
 package com.example.Openfest.entity;
 
 import jakarta.persistence.*;
