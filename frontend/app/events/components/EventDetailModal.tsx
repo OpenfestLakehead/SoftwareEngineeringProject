@@ -4,6 +4,8 @@ import { useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { EventResponse } from "@/lib/api/events";
 import { formatAgeRestriction, formatEventPrice } from "@/lib/helpers/events";
+import GoogleMapsDirections from "@/app/GoogleMapsDirections";
+import RsvpButton from "../RsvpButton";
 
 interface EventDetailModalProps {
   event: EventResponse;
@@ -68,9 +70,9 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
           <button
             type="button"
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl font-semibold leading-none p-1"
+            className="px-2.5 py-1 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            ✕
+            Close
           </button>
         </div>
 
@@ -123,9 +125,16 @@ export default function EventDetailModal({ event }: EventDetailModalProps) {
               </div>
             )}
           </dl>
+
+          {/* RSVP / Ticket Issuance Section */}
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+            <RsvpButton eventId={event.id} price={event.price} />
+          </div>
         </div>
 
-        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-800 flex justify-end">
+        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-800 flex items-center justify-between gap-3">
+          <GoogleMapsDirections location={event.location} />
+
           <button
             type="button"
             onClick={handleClose}

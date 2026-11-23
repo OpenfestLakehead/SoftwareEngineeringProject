@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -8,12 +7,17 @@ type Reservation = {
   eventId: number;
   eventTitle: string;
   attendeeEmail: string;
+  ticketCode?: string | null;
+  ticketStatus?: string | null;
   createdAt: string;
 };
 
 type Props = {
   eventId: number;
 };
+
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 export default function EventAttendees({ eventId }: Props) {
   const [attendees, setAttendees] = useState<Reservation[]>([]);
@@ -33,7 +37,7 @@ export default function EventAttendees({ eventId }: Props) {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/events/${eventId}/rsvps`,
+        `${API_URL}/api/events/${eventId}/rsvps`,
         {
           credentials: "include",
           cache: "no-store",
@@ -66,50 +70,71 @@ export default function EventAttendees({ eventId }: Props) {
       <button
         type="button"
         onClick={handleViewAttendees}
-        className="rounded-lg border border-indigo-300 px-3 py-2 text-sm font-semibold text-indigo-600 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-950"
+        className="rounded-lg border border-blue-200 dark:border-blue-800 px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"
       >
         {isOpen ? "Hide Attendees" : "View Attendees"}
       </button>
 
       {isOpen && (
-        <div className="mt-3 rounded-lg border border-gray-200 p-3 dark:border-zinc-700">
+        <div className="mt-3 rounded-lg border border-gray-200 p-3 dark:border-gray-800">
           {loading && (
-            <p className="text-sm text-gray-500">
+            <p className="text-xs text-gray-600 dark:text-gray-400">
               Loading attendees...
             </p>
           )}
 
           {error && (
-            <p className="text-sm text-red-600">{error}</p>
+            <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
           )}
 
           {!loading && !error && attendees.length === 0 && (
-            <p className="text-sm text-gray-500">
+            <p className="text-xs text-gray-600 dark:text-gray-400">
               No attendees registered yet.
             </p>
           )}
 
           {!loading && !error && attendees.length > 0 && (
             <div className="space-y-2">
-              <p className="text-sm font-semibold">
-                Registered Attendees: {attendees.length}
+              <p className="text-xs font-semibold text-gray-900 dark:text-white">
+                Registered Attendees ({attendees.length})
               </p>
 
               {attendees.map((attendee) => (
                 <div
                   key={attendee.rsvpId}
-                  className="rounded-md bg-gray-50 p-3 dark:bg-zinc-800"
+                  className="rounded-md bg-gray-100 p-2.5 dark:bg-gray-800 space-y-1"
                 >
-                  <p className="break-all text-sm font-medium text-gray-900 dark:text-white">
-                    {attendee.attendeeEmail}
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="break-all text-xs font-semibold text-gray-900 dark:text-white">
+                      {attendee.attendeeEmail}
+                    </p>
+                    {attendee.ticketStatus && (
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                          attendee.ticketStatus === "CHECKED_IN"
+                            ? "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
+                            : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300"
+                        }`}
+                      >
+                        {attendee.ticketStatus === "CHECKED_IN"
+                          ? "Checked-In"
+                          : "Active"}
+                      </span>
+                    )}
+                  </div>
 
-                  <p className="mt-1 text-xs text-gray-500">
-                    Registered:{" "}
-                    {new Date(
-                      attendee.createdAt
-                    ).toLocaleDateString()}
-                  </p>
+                  <div className="flex items-center justify-between gap-2 text-[11px] text-gray-600 dark:text-gray-400">
+                    {attendee.ticketCode ? (
+                      <span className="font-mono font-medium">
+                        Ticket ID: {attendee.ticketCode}
+                      </span>
+                    ) : (
+                      <span>Registered</span>
+                    )}
+                    <span>
+                      {new Date(attendee.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>

@@ -1,14 +1,13 @@
-
 package com.example.Openfest.controller;
 
 import com.example.Openfest.entity.Rsvp;
 import com.example.Openfest.service.RsvpService;
+import com.example.Openfest.service.RsvpService.AttendeeReservationDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -20,25 +19,6 @@ public class RsvpController {
 
     public RsvpController(RsvpService rsvpService) {
         this.rsvpService = rsvpService;
-    }
-
-    // Safe response without exposing user entities
-    public record ReservationResponse(
-            Long rsvpId,
-            Long eventId,
-            String eventTitle,
-            String attendeeEmail,
-            LocalDateTime createdAt
-    ) {}
-
-    private ReservationResponse toResponse(Rsvp rsvp) {
-        return new ReservationResponse(
-                rsvp.getId(),
-                rsvp.getEvent().getId(),
-                rsvp.getEvent().getTitle(),
-                rsvp.getUser().getEmail(),
-                rsvp.getCreatedAt()
-        );
     }
 
     // Create a free event RSVP
@@ -64,22 +44,19 @@ public class RsvpController {
 
     // Attendee: view their own reservations
     @GetMapping("/my-rsvps")
-    public List<ReservationResponse> getMyReservations(
+    public List<AttendeeReservationDto> getMyReservations(
             Authentication authentication) {
 
         String email = authentication == null
                 ? null
                 : authentication.getName();
 
-        return rsvpService.getMyReservations(email)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        return rsvpService.getMyReservationDtos(email);
     }
 
     // Creator: view reservations for their event
     @GetMapping("/{eventId}/rsvps")
-    public List<ReservationResponse> getEventReservations(
+    public List<AttendeeReservationDto> getEventReservations(
             @PathVariable Long eventId,
             Authentication authentication) {
 
@@ -87,9 +64,6 @@ public class RsvpController {
                 ? null
                 : authentication.getName();
 
-        return rsvpService.getEventReservations(eventId, email)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        return rsvpService.getEventReservationDtos(eventId, email);
     }
 }

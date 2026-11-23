@@ -66,32 +66,15 @@ export default async function ExploreEventsPage({
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-8 border-b border-gray-200 dark:border-gray-800">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-              Explore Events
-            </h1>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-              Browse upcoming published outdoor events across the community.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="px-4 py-2 text-sm font-semibold rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            >
-              Home
-            </Link>
-            <Link
-              href="/dashboard"
-              className="px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-            >
-              Creator Dashboard
-            </Link>
-          </div>
-        </header>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="pb-6 border-b border-gray-200 dark:border-gray-800">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+            Explore Events
+          </h1>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            Browse upcoming published outdoor events across the community.
+          </p>
+        </div>
 
         <EventFilterBar
           key={filterQuery}

@@ -5,11 +5,12 @@ import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, logout } from "@/lib/api";
-import EventAttendees from "./EventAttendees";
 import {
   formatAgeRestriction,
   formatEventPrice,
 } from "@/lib/helpers/events";
+import GoogleMapsDirections from "@/app/GoogleMapsDirections";
+import EventAttendees from "./EventAttendees";
 import {
   getCreatorEventsAction,
   updateEventAction,
@@ -283,28 +284,28 @@ export default function CreatorDashboard() {
       case "PUBLISHED":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
-            ● Published
+            Published
           </span>
         );
 
       case "DRAFT":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-            ● Draft
+            Draft
           </span>
         );
 
       case "CLOSED":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">
-            ● Closed
+            Closed
           </span>
         );
 
       case "SOLD_OUT":
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">
-            ● Sold Out
+            Sold Out
           </span>
         );
 
@@ -362,7 +363,7 @@ export default function CreatorDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-zinc-100">
-            Event Creator Dashboard
+            Creator Dashboard
           </h1>
 
           <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400">
@@ -375,39 +376,29 @@ export default function CreatorDashboard() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={fetchEvents}
             disabled={isLoading}
             className="px-3.5 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50"
             title="Refresh event list"
           >
-            {isLoading ? "Refreshing..." : "↻ Refresh"}
+            {isLoading ? "Refreshing..." : "Refresh"}
           </button>
 
           <Link
             href="/events/create"
             className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-zinc-900 transition-colors"
           >
-            + Create New Event
+            Create New Event
           </Link>
-          
-
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="px-4 py-2 text-sm font-semibold rounded-lg border border-red-500/40 bg-red-950/30 text-red-400 hover:bg-red-900/40 transition-colors disabled:opacity-50"
-          >
-            {isLoggingOut ? "Logging out..." : "Logout"}
-          </button>
         </div>
       </div>
 
       {/* Notifications */}
       {actionSuccessMessage && (
         <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-300 text-sm flex items-center justify-between">
-          <span>✓ {actionSuccessMessage}</span>
+          <span>{actionSuccessMessage}</span>
 
           <button
             onClick={() => setActionSuccessMessage(null)}
@@ -420,7 +411,7 @@ export default function CreatorDashboard() {
 
       {errorMessage && (
         <div className="p-4 rounded-lg bg-red-50 border border-red-200 text-red-800 dark:bg-red-950/40 dark:border-red-900/60 dark:text-red-300 text-sm flex items-center justify-between">
-          <span>⚠ {errorMessage}</span>
+          <span>{errorMessage}</span>
 
           <button
             onClick={() => setErrorMessage(null)}
@@ -536,11 +527,7 @@ export default function CreatorDashboard() {
         </div>
       ) : filteredEvents.length === 0 ? (
         <div className="text-center py-16 px-4 bg-white dark:bg-zinc-900 rounded-xl border border-dashed border-gray-300 dark:border-zinc-800">
-          <div className="mx-auto w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl font-bold">
-            📅
-          </div>
-
-          <h3 className="mt-3 text-lg font-semibold text-gray-900 dark:text-zinc-100">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">
             {events.length === 0
               ? "No events created yet"
               : "No matching events found"}
@@ -558,7 +545,7 @@ export default function CreatorDashboard() {
                 href="/events/create"
                 className="inline-flex items-center px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors"
               >
-                + Create Your First Event
+                Create Your First Event
               </Link>
             </div>
           )}
@@ -642,9 +629,11 @@ export default function CreatorDashboard() {
                     </span>
                   </div>
                 </div>
-              </div>
 
-              <div className="px-5 pb-4">
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <GoogleMapsDirections location={evt.location} />
+                </div>
+
                 <EventAttendees eventId={evt.id} />
               </div>
 
@@ -654,7 +643,7 @@ export default function CreatorDashboard() {
                   onClick={() => handleOpenEdit(evt)}
                   className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
                 >
-                  ✏ Edit
+                  Edit
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -718,9 +707,9 @@ export default function CreatorDashboard() {
 
               <button
                 onClick={() => setEditingEvent(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 text-xl font-semibold leading-none"
+                className="px-2.5 py-1 text-xs font-semibold rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
-                ✕
+                Close
               </button>
             </div>
 

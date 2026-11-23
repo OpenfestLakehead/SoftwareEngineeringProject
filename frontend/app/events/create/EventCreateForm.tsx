@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import CityAutocomplete from "@/components/shared/CityAutocomplete";
+import { useRouter } from "next/navigation";
+import { getCurrentUser } from "@/lib/api";
 import {
   createEventAction,
   type AgeRestriction,
@@ -11,6 +13,9 @@ import {
 } from "@/lib/api/events";
 
 export default function EventCreateForm() {
+  const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -25,6 +30,28 @@ export default function EventCreateForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdEvent, setCreatedEvent] = useState<EventResponse | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    getCurrentUser()
+      .then((user) => {
+        if (!active) return;
+        if (!user) {
+          router.replace("/login");
+          return;
+        }
+        setAuthChecked(true);
+      })
+      .catch(() => {
+        if (!active) return;
+        router.replace("/login");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [router]);
 
   const resetForm = () => {
     setFormData({
@@ -104,6 +131,16 @@ export default function EventCreateForm() {
     }
   };
 
+  if (!authChecked) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Verifying your session...
+        </p>
+      </div>
+    );
+  }
+
   return (
     <>
       {serverError && (
@@ -133,14 +170,14 @@ export default function EventCreateForm() {
               href="/dashboard"
               className="px-4 py-2 text-xs font-semibold rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white shadow-sm transition-colors"
             >
-              View in Dashboard →
+              View in Dashboard
             </Link>
             <button
               type="button"
               onClick={resetForm}
               className="px-4 py-2 text-xs font-medium rounded-lg border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-zinc-800 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-50 dark:hover:bg-zinc-700 transition-colors"
             >
-              + Create Another Event
+              Create Another Event
             </button>
           </div>
         </div>
@@ -296,7 +333,7 @@ export default function EventCreateForm() {
             htmlFor="price"
             className="block text-sm font-medium text-gray-800 dark:text-zinc-200"
           >
-            Ticket Price (USD) <span className="text-red-500 dark:text-red-400">*</span>
+            Ticket Price (CAD) <span className="text-red-500 dark:text-red-400">*</span>
           </label>
           <div className="relative mt-1 rounded-md shadow-sm">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
