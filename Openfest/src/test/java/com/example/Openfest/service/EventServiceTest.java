@@ -194,4 +194,79 @@ class EventServiceTest {
                 eventService.updateEvent(30L, updateRequest, "other@openfest.com")
         );
     }
+
+    @Test
+    void getPublishedEvents_NoFilters_ReturnsOnlyPublishedEvents() {
+        User creator = new User("creator@openfest.com", "hashedPassword");
+        Event publishedEvent = new Event(creator, "Summer Jam", "Live music", "Thunder Bay, Ontario, Canada", 200, AgeRestriction.ALL_AGES, BigDecimal.ZERO, EventStatus.PUBLISHED);
+        Event draftEvent = new Event(creator, "Draft Fest", "Unpublished", "Toronto, Ontario, Canada", 100, AgeRestriction.ALL_AGES, BigDecimal.TEN, EventStatus.DRAFT);
+        Event closedEvent = new Event(creator, "Closed Fest", "Closed", "Ottawa, Ontario, Canada", 100, AgeRestriction.ALL_AGES, BigDecimal.TEN, EventStatus.CLOSED);
+        Event soldOutEvent = new Event(creator, "Sold Out Fest", "Full", "London, Ontario, Canada", 100, AgeRestriction.ALL_AGES, BigDecimal.TEN, EventStatus.SOLD_OUT);
+
+        when(eventRepository.findByStatusOrderByCreatedAtDesc(EventStatus.PUBLISHED))
+                .thenReturn(List.of(publishedEvent, draftEvent, closedEvent, soldOutEvent));
+
+        List<EventResponse> results = eventService.getPublishedEvents(null, null, null, null, null);
+
+        assertEquals(1, results.size());
+        assertEquals("Summer Jam", results.get(0).getTitle());
+        assertEquals(EventStatus.PUBLISHED, results.get(0).getStatus());
+        verify(eventRepository).findByStatusOrderByCreatedAtDesc(EventStatus.PUBLISHED);
+    }
+
+    @Test
+    void getPublishedEvents_KeywordAndCityFilters_MatchesCaseInsensitively() {
+        User creator = new User("creator@openfest.com", "hashedPassword");
+        Event matchByTitle = new Event(creator, "Jazz Night", null, "Thunder Bay, Ontario, Canada", 120, AgeRestriction.EIGHTEEN_PLUS, new BigDecimal("15.00"), EventStatus.PUBLISHED);
+        Event matchByDesc = new Event(creator, "Lakefront Gathering", "Evening JAZZ showcase by the harbor", "Thunder Bay, Ontario, Canada", 150, AgeRestriction.ALL_AGES, BigDecimal.ZERO, EventStatus.PUBLISHED);
+        Event differentCity = new Event(creator, "Jazz Brunch", "Sunday jazz", "Toronto, Ontario, Canada", 80, AgeRestriction.ALL_AGES, new BigDecimal("20.00"), EventStatus.PUBLISHED);
+
+        when(eventRepository.findByStatusOrderByCreatedAtDesc(EventStatus.PUBLISHED))
+                .thenReturn(List.of(matchByTitle, matchByDesc, differentCity));
+
+        List<EventResponse> results = eventService.getPublishedEvents("jazz", "thunder bay", null, null, null);
+
+        assertEquals(2, results.size());
+        assertEquals("Jazz Night", results.get(0).getTitle());
+        assertEquals("Lakefront Gathering", results.get(1).getTitle());
+    }
+
+    @Test
+    void getPublishedEvents_PriceFilters_FiltersFreeOnlyAndMaxPrice() {
+        User creator = new User("creator@openfest.com", "hashedPassword");
+        Event freeEvent = new Event(creator, "Free Park Yoga", "Morning session", "Ottawa, Ontario, Canada", 50, AgeRestriction.ALL_AGES, BigDecimal.ZERO, EventStatus.PUBLISHED);
+        Event midEvent = new Event(creator, "Indie Concert", "Live bands", "Ottawa, Ontario, Canada", 100, AgeRestriction.EIGHTEEN_PLUS, new BigDecimal("25.00"), EventStatus.PUBLISHED);
+        Event priceyEvent = new Event(creator, "VIP Gala", "Dinner & show", "Ottawa, Ontario, Canada", 40, AgeRestriction.TWENTY_ONE_PLUS, new BigDecimal("95.00"), EventStatus.PUBLISHED);
+
+        when(eventRepository.findByStatusOrderByCreatedAtDesc(EventStatus.PUBLISHED))
+                .thenReturn(List.of(freeEvent, midEvent, priceyEvent));
+
+        List<EventResponse> freeResults = eventService.getPublishedEvents(null, null, true, null, null);
+        assertEquals(1, freeResults.size());
+        assertEquals("Free Park Yoga", freeResults.get(0).getTitle());
+
+        List<EventResponse> maxPriceResults = eventService.getPublishedEvents(null, null, false, new BigDecimal("25.00"), null);
+        assertEquals(2, maxPriceResults.size());
+        assertEquals("Free Park Yoga", maxPriceResults.get(0).getTitle());
+        assertEquals("Indie Concert", maxPriceResults.get(1).getTitle());
+    }
+
+    @Test
+    void getPublishedEvents_AgeRestrictionFilter_StrictMatch() {
+        User creator = new User("creator@openfest.com", "hashedPassword");
+        Event allAges = new Event(creator, "Family Picnic", "Outdoor fun", "London, Ontario, Canada", 300, AgeRestriction.ALL_AGES, BigDecimal.ZERO, EventStatus.PUBLISHED);
+        Event eighteenPlus = new Event(creator, "Night Market", "Outdoor food & drinks", "London, Ontario, Canada", 200, AgeRestriction.EIGHTEEN_PLUS, new BigDecimal("10.00"), EventStatus.PUBLISHED);
+        Event twentyOnePlus = new Event(creator, "Craft Tasting", "Outdoor tasting", "London, Ontario, Canada", 100, AgeRestriction.TWENTY_ONE_PLUS, new BigDecimal("35.00"), EventStatus.PUBLISHED);
+
+        when(eventRepository.findByStatusOrderByCreatedAtDesc(EventStatus.PUBLISHED))
+                .thenReturn(List.of(allAges, eighteenPlus, twentyOnePlus));
+
+        List<EventResponse> ageOnly = eventService.getPublishedEvents(null, null, null, null, AgeRestriction.EIGHTEEN_PLUS);
+        assertEquals(1, ageOnly.size());
+        assertEquals("Night Market", ageOnly.get(0).getTitle());
+
+        List<EventResponse> combined = eventService.getPublishedEvents("outdoor", "London, Ontario, Canada", false, new BigDecimal("15.00"), AgeRestriction.EIGHTEEN_PLUS);
+        assertEquals(1, combined.size());
+        assertEquals("Night Market", combined.get(0).getTitle());
+    }
 }

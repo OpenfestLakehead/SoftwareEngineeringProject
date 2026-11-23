@@ -3,6 +3,7 @@ package com.example.Openfest.service;
 import com.example.Openfest.dto.CreateEventRequest;
 import com.example.Openfest.dto.EventResponse;
 import com.example.Openfest.dto.UpdateEventRequest;
+import com.example.Openfest.entity.AgeRestriction;
 import com.example.Openfest.entity.Event;
 import com.example.Openfest.entity.EventStatus;
 import com.example.Openfest.entity.User;
@@ -14,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,6 +58,66 @@ public class EventService {
 
         Event savedEvent = eventRepository.save(event);
         return EventResponse.fromEntity(savedEvent);
+    }
+
+    @Transactional(readOnly = true)
+    public List<EventResponse> getPublishedEvents(
+            String q,
+            String city,
+            Boolean freeOnly,
+            BigDecimal maxPrice,
+            AgeRestriction ageRestriction) {
+
+        List<Event> publishedEvents = eventRepository.findByStatusOrderByCreatedAtDesc(EventStatus.PUBLISHED);
+
+        String normalizedQuery = (q != null && !q.trim().isEmpty())
+                ? q.trim().toLowerCase(Locale.ROOT)
+                : null;
+        String normalizedCity = (city != null && !city.trim().isEmpty())
+                ? city.trim().toLowerCase(Locale.ROOT)
+                : null;
+
+        return publishedEvents.stream()
+                .filter(event -> event.getStatus() == EventStatus.PUBLISHED)
+                .filter(event -> {
+                    if (normalizedQuery == null) {
+                        return true;
+                    }
+                    boolean matchesTitle = event.getTitle() != null
+                            && event.getTitle().toLowerCase(Locale.ROOT).contains(normalizedQuery);
+                    boolean matchesDescription = event.getDescription() != null
+                            && event.getDescription().toLowerCase(Locale.ROOT).contains(normalizedQuery);
+                    return matchesTitle || matchesDescription;
+                })
+                .filter(event -> {
+                    if (normalizedCity == null) {
+                        return true;
+                    }
+                    return event.getLocation() != null
+                            && event.getLocation().toLowerCase(Locale.ROOT).contains(normalizedCity);
+                })
+                .filter(event -> {
+                    if (Boolean.TRUE.equals(freeOnly)) {
+                        return event.getPrice() != null
+                                && event.getPrice().compareTo(BigDecimal.ZERO) == 0;
+                    }
+                    return true;
+                })
+                .filter(event -> {
+                    if (maxPrice != null) {
+                        return event.getPrice() != null
+                                && event.getPrice().compareTo(maxPrice) <= 0;
+                    }
+                    return true;
+                })
+                .filter(event -> {
+                    if (ageRestriction != null) {
+                        return event.getAgeRestriction() == ageRestriction;
+                    }
+                    return true;
+                })
+                .map(EventResponse::fromEntity)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
