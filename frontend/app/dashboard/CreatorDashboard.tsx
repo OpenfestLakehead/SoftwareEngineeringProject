@@ -7,6 +7,10 @@ import { useRouter } from "next/navigation";
 import { getCurrentUser, logout } from "@/lib/api";
 import EventAttendees from "./EventAttendees";
 import {
+  formatAgeRestriction,
+  formatEventPrice,
+} from "@/lib/helpers/events";
+import {
   getCreatorEventsAction,
   updateEventAction,
   updateEventStatusAction,
@@ -313,21 +317,6 @@ export default function CreatorDashboard() {
     }
   };
 
-  const formatAgeRestriction = (age: string) => {
-    switch (age) {
-      case "ALL_AGES":
-        return "All Ages";
-      case "THIRTEEN_PLUS":
-        return "13+";
-      case "EIGHTEEN_PLUS":
-        return "18+";
-      case "TWENTY_ONE_PLUS":
-        return "21+";
-      default:
-        return age;
-    }
-  };
-
   // Authentication loading state
   if (checkingAuth || !currentUser) {
     return (
@@ -629,9 +618,7 @@ export default function CreatorDashboard() {
                     </span>
 
                     <span className="font-semibold text-gray-800 dark:text-zinc-200">
-                      {evt.price === 0
-                        ? "Free RSVP"
-                        : `$${evt.price.toFixed(2)}`}
+                      {formatEventPrice(evt.price)}
                     </span>
                   </div>
 
